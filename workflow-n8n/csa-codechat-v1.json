@@ -57,7 +57,7 @@
       "credentials": {
         "postgres": {
           "id": "1",
-          "name": "app.dispzap.com"
+          "name": "SUACREDENCIALPOSTGRES"
         }
       }
     },
