@@ -1,0 +1,179 @@
+{
+  "meta": {
+    "instanceId": "2fafe52ede5ff1f0e4d8a6dd16955c894d3764bf08ba970691f87aeac9c8de46"
+  },
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "csat-codechat",
+        "options": {}
+      },
+      "id": "318dfbe4-7dff-4c58-a621-bebc155a9903",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        580,
+        1680
+      ],
+      "webhookId": "7bf24b23-d6bd-40ad-827b-947a71dbff91"
+    },
+    {
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "=msg_csat",
+              "value": "={{ $node[\"Webhook\"].json[\"body\"][\"meta\"][\"sender\"][\"name\"] }} seu atendimento de Ticket de nº{{ $node[\"Webhook\"].json[\"body\"][\"messages\"][0][\"id\"]  }} foi fechado tá! Caso tenha alguma dúvida só enviar uma nova mensagem!\n\nAproveite e avalie nossa conversa. Sua opinião é muito importante para nós e nos ajudará a identificar áreas de melhorias e continuar oferecendo um serviço de excelência.😎\n\nSó clicar nesse link👇🏻\nhttps://app.dispzap.com/survey/responses/{{ $node[\"ConsultaIDBanco\"].json[\"uuid\"] }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "55ea220e-4cc6-4c0f-a59a-b73df584637f",
+      "name": "SetMensagem",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 2,
+      "position": [
+        1060,
+        1780
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "=SELECT uuid FROM conversations WHERE contact_inbox_id ={{ $node[\"Webhook\"].json[\"body\"][\"contact_inbox\"][\"id\"] }} ;",
+        "options": {}
+      },
+      "id": "9b94905b-3b94-4779-bedf-3f127a37c524",
+      "name": "ConsultaIDBanco",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2,
+      "position": [
+        820,
+        1900
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "1",
+          "name": "app.dispzap.com"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "batchSize": 1,
+        "options": {}
+      },
+      "id": "f74e5670-04f1-4982-852b-8c68cd5edf41",
+      "name": "RemoveDuplicate",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 2,
+      "position": [
+        1280,
+        1780
+      ],
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://URLCODECHAT/message/sendText/INSTANCIA",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "TOKE-APIKEY"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\"number\":\"{{ $node[\"Webhook\"].json[\"body\"][\"meta\"][\"sender\"][\"phone_number\"].replace(/\\D/gi, \"\") }}\",\"options\":{\"delay\":3000},\"textMessage\":{\"text\":\"{{ $node[\"SetMensagem\"].json[\"msg_csat\"].replace(/\\n/g, \"\\\\n\") }}\"}}\n\n",
+        "options": {}
+      },
+      "id": "e55eb449-2e38-42c5-8438-9f2585e593b7",
+      "name": "SendCodechatTextZen",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        1540,
+        1960
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{ $node.Webhook.json.body.meta.team.name }}",
+              "value2": "team-z-envio"
+            }
+          ]
+        }
+      },
+      "id": "e8309be8-1b17-4877-ad61-1d2f6c2abea8",
+      "name": "IF1",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        1300,
+        1980
+      ],
+      "disabled": true
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "ConsultaIDBanco",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "SetMensagem",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "SetMensagem": {
+      "main": [
+        [
+          {
+            "node": "SendCodechatTextZen",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "ConsultaIDBanco": {
+      "main": [
+        [
+          {
+            "node": "SetMensagem",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "RemoveDuplicate": {
+      "main": [
+        [
+          {
+            "node": "IF1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  }
+}
