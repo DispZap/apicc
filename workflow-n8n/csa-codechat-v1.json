@@ -146,7 +146,7 @@
       "main": [
         [
           {
-            "node": "SendCodechatTextZen",
+            "node": "NOMENODEINBOXENVIO",
             "type": "main",
             "index": 0
           }
